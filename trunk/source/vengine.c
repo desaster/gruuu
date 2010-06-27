@@ -202,6 +202,16 @@ int v_spr_create(struct VEngine *veng, u16 *tile, u16 color)
 	return i;
 }
 
+void v_init_monster(struct VEngine *veng, u8 idx)
+{
+	veng->monsters[idx].mobposx = -1;
+	veng->monsters[idx].mobposy = -1;
+	veng->monsters[idx].active = 1;
+	debug("Loading monster %d with stuff", idx);
+	veng->monsters[idx].sprite =
+		v_spr_create(veng, CHARTILE(33), COLOR_RED);
+}
+
 void v_init(struct VEngine *veng)
 {
 	int i;
@@ -223,6 +233,10 @@ void v_init(struct VEngine *veng)
 		veng->sprites[i].allocated = 0;
 		veng->sprites_allocated[i] = 0;
 		veng->tiles_allocated[i] = 0;
+	}
+
+	for (i = 0; i < 10; i ++) {
+		veng->monsters[i].active = 0;
 	}
 
 	/* veng->spr_dude = &veng->obj_buffer[0]; */
@@ -290,6 +304,20 @@ void v_spr_free(struct VEngine *veng, u8 idx)
 	veng->sprites_allocated[idx] = 0;
 }
 
+void v_shake_dude(struct VEngine *veng, u8 x, u8 y)
+{
+	int i;
+
+	for (i = -5; i != 5; i ++) {
+		obj_set_pos(SPR_DUDE,
+			(16 * 7) + (veng->dudeposx * 16) + (x * i),
+			(16 * 4) + (veng->dudeposy * 16) + (y * i));
+		oam_copy(oam_mem, veng->obj_buffer, 11); 
+		vid_vsync();
+	}
+
+}
+
 void v_draw_dude(struct VEngine *veng)
 {
 	obj_set_pos(SPR_DUDE,
@@ -299,7 +327,27 @@ void v_draw_dude(struct VEngine *veng)
 
 void v_draw_monster(struct VEngine *veng, struct World *world, u8 idx)
 {
-	debug("Would like to draw monster %d", idx);
+	struct Monster *mob = &world->monsters[idx];
+	struct VEngine_Monster *vmob = &veng->monsters[idx];
+
+	/* debug("Would like to draw monster %d", idx); */
+	vmob->mobposx = veng->dudeposx + (mob->x - world->map->dudex);
+	vmob->mobposy = veng->dudeposy + (mob->y - world->map->dudey);
+
+	if (!mob->alive || mob->x < veng->mapofsx ||
+			mob->x > veng->mapofsx + 15 ||
+			mob->y < veng->mapofsy - 2 ||
+			mob->y > veng->mapofsy + 10) {
+		/* draw off-screen if not visible */
+		/* debug("mob %d is drawn off-screen", idx); */
+		obj_set_pos(SPR_MOB(idx), -16, -16);
+	} else {
+		/* debug("mob %d is drawn on-screen", idx); */
+		obj_set_pos(SPR_MOB(idx),
+			(16 * 7) + (vmob->mobposx * 16),
+			(16 * 4) + (vmob->mobposy * 16));
+	}
+
 }
 
 /* Animate dude's movements */
@@ -360,22 +408,11 @@ void v_move_down(struct VEngine *veng)
 	veng->dudeposy ++;
 }
 
-/* Has the dude met the edge of the visible screen? Should we scroll? */
-int v_at_edge(struct VEngine *veng, struct World *world)
-{
-	if (veng->dudeposy == 5 ||
-			veng->dudeposy == -4 ||
-			veng->dudeposx == 7 ||
-			veng->dudeposx == -7) {
-		return 1;
-	}
-	return 0;
-}
-
 /* Scroll the dude & monsters */
-void v_scroll_sprites(struct VEngine *veng, int x, int y)
+void v_scroll_sprites(struct VEngine *veng, struct World *world, int x, int y)
 {
-	int i, steps = 0;
+	int i, m, steps = 0;
+	struct Monster *mob;
 
 	if (y == -1) steps = 5;
 	else if (y == 1) steps = 4;
@@ -386,7 +423,23 @@ void v_scroll_sprites(struct VEngine *veng, int x, int y)
 		obj_set_pos(SPR_DUDE,
 			(16 * 7) + (veng->dudeposx * 16) + (x * i),
 			(16 * 4) + (veng->dudeposy * 16) + (y * i));
-		oam_copy(oam_mem, veng->obj_buffer, 1); 
+
+		for (m = 0; m < world->monstercount; m ++) {
+			mob = &world->monsters[m];
+			if (!mob->alive || mob->x < veng->mapofsx ||
+					mob->x > veng->mapofsx + 15 ||
+					mob->y < veng->mapofsy - 2 ||
+					mob->y > veng->mapofsy + 10) {
+				continue;
+			}
+			obj_set_pos(SPR_MOB(m),
+				(16 * 7) + (veng->monsters[m].mobposx * 16) +
+				(x * i),
+				(16 * 4) + (veng->monsters[m].mobposy * 16) +
+				(y * i));
+		}
+		oam_copy(oam_mem, veng->obj_buffer, 1 + world->monstercount); 
+
 		REG_BG0HOFS = (veng->mapofsx * 16) + -(x * i);
 		REG_BG0VOFS = (veng->mapofsy * 16) + -(y * i);
 		vid_vsync();
@@ -407,7 +460,7 @@ void v_scroll_at_edge(struct VEngine *veng, struct World *world)
 			veng->mapofsx, veng->mapofsy + 10, 15, 5,
 			world->map->dudex - 7 - veng->dudeposx,
 			world->map->dudey + 6 - veng->dudeposy);
-		v_scroll_sprites(veng, 0, -1);
+		v_scroll_sprites(veng, world, 0, -1);
 	}
 
 	/* At the top edge */
@@ -416,7 +469,7 @@ void v_scroll_at_edge(struct VEngine *veng, struct World *world)
 			veng->mapofsx, veng->mapofsy - 4, 15, 4,
 			world->map->dudex - 7 - veng->dudeposx,
 			world->map->dudey - 8 - veng->dudeposy);
-		v_scroll_sprites(veng, 0, 1);
+		v_scroll_sprites(veng, world, 0, 1);
 	}
 
 	/* At the right edge */
@@ -425,7 +478,7 @@ void v_scroll_at_edge(struct VEngine *veng, struct World *world)
 			veng->mapofsx + 15, veng->mapofsy, 8, 10,
 			world->map->dudex + 8 - veng->dudeposx,
 			world->map->dudey - 4 - veng->dudeposy);
-		v_scroll_sprites(veng, -1, 0);
+		v_scroll_sprites(veng, world, -1, 0);
 	}
 
 	/* At the left edge */
@@ -434,7 +487,7 @@ void v_scroll_at_edge(struct VEngine *veng, struct World *world)
 			veng->mapofsx - 9, veng->mapofsy, 9, 10,
 			world->map->dudex - 16 - veng->dudeposx,
 			world->map->dudey - 4 - veng->dudeposy);
-		v_scroll_sprites(veng, 1, 0);
+		v_scroll_sprites(veng, world, 1, 0);
 	}
 
 	REG_BG0HOFS = veng->mapofsx * 16;

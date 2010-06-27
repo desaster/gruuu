@@ -2,7 +2,7 @@
 #include <stdarg.h>
 #include <string.h>
 
-void debug(const char *format, ...)
+void debug_vba(const char *format, ...)
 {
 	va_list args;
 	char foo[255];
@@ -19,4 +19,7 @@ void debug(const char *format, ...)
 			: "r0");
 
 	va_end(args);
+}
+
+void debug_gba(const char *format, ...) {
 }

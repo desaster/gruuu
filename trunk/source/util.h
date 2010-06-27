@@ -1,7 +1,10 @@
 #ifndef __UTIL__
 #define __UTIL__
 
-void debug(const char *format, ...);
+#define debug debug_gba
+
+void debug_gba(const char *format, ...);
+void debug_vba(const char *format, ...);
 
 #endif
 

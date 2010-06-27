@@ -27,11 +27,19 @@
 #define CHARTILELEN 8 * 8 * 16
 
 #define SPR_DUDE &veng->obj_buffer[veng->sprites[veng->spr_dude].sprite]
+#define SPR_MOB(idx) &veng->obj_buffer[veng->monsters[idx].sprite]
 
 struct VEngine_Sprite {
 	u8 sprite;
 	u16 tile;
 	u8 allocated;
+};
+
+struct VEngine_Monster {
+	u8 sprite; /* indexes to a sprite */
+	u32 mobposx;
+	u32 mobposy;
+	u8 active;
 };
 
 struct VEngine {
@@ -43,16 +51,21 @@ struct VEngine {
 	u32 mapofsx;
 	u32 mapofsy;
 
-        /* Sprites go here */
+	/* Sprites go here */
 	OBJ_ATTR obj_buffer[128];
 	struct VEngine_Sprite sprites[128];
 	u8 tiles_allocated[128]; /* sprite tiles */
 	u8 sprites_allocated[128];
 
-        u8 spr_dude; /* index in sprites */
+	u8 spr_dude; /* index in sprites */
+	struct VEngine_Monster monsters[50];
 };
 
 void v_init(struct VEngine *veng);
+
+void v_init_monster(struct VEngine *veng, u8 idx);
+
+void v_shake_dude(struct VEngine *veng, u8 x, u8 y);
 
 u8 v_tile_alloc(struct VEngine *veng);
 void v_tile_free(struct VEngine *veng, u8 idx);

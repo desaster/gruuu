@@ -7,11 +7,12 @@ struct Monster {
 	int x;
 	int y;
 	int type;
+	int alive;
 };
 
 struct World {
 	struct Map map[MAP_MAX_SIZE];
-	struct Monster monsters[30];
+	struct Monster monsters[50];
 	int monstercount;
 };
 

@@ -12,17 +12,19 @@
 #define HTILES 15
 #define VTILES 10
 
-void init_world(struct World *world)
+void init_world(struct World *world, struct VEngine *veng)
 {
-	int i;
+	int i, m;
 
 	/* FIXME: why big maps appear broken? */
 	genmap(world->map, 40, 40);
 
-	for (i = 0; i < 1; i ++) {
-		init_monster(world, i);
+	world->monstercount = 0;
+	for (i = 0; i < 15; i ++) {
+		m = world->monstercount ++;
+		init_monster(world, m);
+		v_init_monster(veng, m);
 	}
-	world->monstercount = 1;
 }
 
 int main()
@@ -52,7 +54,7 @@ int main()
 	/* sqran(i); */
 	sqran(4);
 
-	init_world(&world);
+	init_world(&world, &veng);
 
 	/* obj_set_pos(dude, (16 * 7), (16 * 4)); */
 	
@@ -64,14 +66,16 @@ int main()
 		key_poll();
 
 		if (key_hit(KEY_A)) {
+			/*
 			v_draw_more_bg(world.map, veng.mapofsx, veng.mapofsy - 4, 15, 4,
 				world.map->dudex - 6 - veng.dudeposx,
 				world.map->dudey - 4 - 4 - veng.dudeposy);
+				*/
 		}
 
 		if (key_hit(KEY_START)) {
-			init_world(&world);
 			v_init(&veng);
+			init_world(&world, &veng);
 
 			/*
 			obj_set_pos(veng.obj_buffer[veng.spr_dude], (16 * 7), (16 * 4));
@@ -81,55 +85,50 @@ int main()
 				world.map->dudex, world.map->dudey);
 		}
 
-		if (key_hit(KEY_LEFT) && r_move_left(&world)) {
-			v_move_left(&veng);
-		} else if (key_hit(KEY_RIGHT) && r_move_right(&world)) {
-			v_move_right(&veng);
-		} else if (key_hit(KEY_UP) && r_move_up(&world)) {
-			v_move_up(&veng);
-		} else if (key_hit(KEY_DOWN) && r_move_down(&world)) {
-			v_move_down(&veng);
-		}
-
-		if (v_at_edge(&veng, &world)) {
-			debug("Reuna tuli vastaan!");
+		if (key_hit(KEY_LEFT)) {
+			switch (r_move_left(&world)) {
+				case 1:
+					v_move_left(&veng);
+					break;
+				case 2:
+					v_shake_dude(&veng, 1, 0);
+					break;
+			}
+		} else if (key_hit(KEY_RIGHT)) {
+			switch (r_move_right(&world)) {
+				case 1:
+					v_move_right(&veng);
+					break;
+				case 2:
+					v_shake_dude(&veng, 1, 0);
+					break;
+			}
+		} else if (key_hit(KEY_UP)) {
+			switch (r_move_up(&world)) {
+				case 1:
+					v_move_up(&veng);
+					break;
+				case 2:
+					v_shake_dude(&veng, 0, 1);
+					break;
+			}
+		} else if (key_hit(KEY_DOWN)) {
+			switch (r_move_down(&world)) {
+				case 1:
+					v_move_down(&veng);
+					break;
+				case 2:
+					v_shake_dude(&veng, 0, 1);
+					break;
+			}
 		}
 
 		v_scroll_at_edge(&veng, &world);
 
-		/* debug("dude will be drawn at [%d]",
-			(16 * 7) + (veng.dudeposx * 16)); */
 		v_draw_dude(&veng);
 
 		for (i = 0; i < world.monstercount; i ++) {
-			struct Monster *mob;
-			mob = &world.monsters[i];
 			v_draw_monster(&veng, &world, i);
-			/*
-			if (!(mob->x >= mapofsx &&
-					mob->x <= mapofsx + 15 &&
-					mob->y >= mapofsy &&
-					mob->y <= mapofsy + 10)) {
-				obj_hide(goblin);
-				continue;
-			}
-			obj_unhide(goblin, 0);
-			*/
-			/*
-			debug("*** Monster %d", i);
-			debug(" mob on map [%dx%d]", mob->x, mob->y);
-			debug(" dude on map [%dx%d]",
-				world.map->dudex, world.map->dudey);
-			*/
-
-			/*
-			mobposx = veng.dudeposx + (mob->x - world.map->dudex);
-			mobposy = veng.dudeposy + (mob->y - world.map->dudey);
-			obj_set_pos(veng.goblin,
-				(16 * 7) + (mobposx * 16),
-				(16 * 4) + (mobposy * 16));
-			break;
-			*/
 		}
 
 		oam_copy(oam_mem, veng.obj_buffer, 1 + world.monstercount);

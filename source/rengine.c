@@ -7,6 +7,7 @@ void init_monster(struct World *world, int i)
 {
 	struct Monster *monster;
 
+	debug("Creating monster %d", i);
 	monster = &world->monsters[i];
 	monster->x = 0;
 	monster->y = 0;
@@ -21,6 +22,13 @@ void init_monster(struct World *world, int i)
 		}
 	}
 
+	/*
+	monster->x = world->map->dudex + 1;
+	monster->y = world->map->dudey + 1;
+	*/
+
+	monster->alive = 1;
+
 	monster->type = 0;
 }
 
@@ -33,11 +41,29 @@ int r_can_enter(struct World *world, u32 x, u32 y)
 	return 1;
 }
 
+int r_can_fight(struct World *world, u32 x, u32 y)
+{
+	int i;
+
+	for (i = 0; i < world->monstercount; i ++) {
+		if (!world->monsters[i].alive) continue;
+		if (x == world->monsters[i].x &&
+				y == world->monsters[i].y) {
+			world->monsters[i].alive = 0;
+			return 1;
+		}
+	}
+	return 0;
+}
+
 /* move the dude's position on map */
 
 int r_move_left(struct World *world)
 {    
-	if (r_can_enter(world, world->map->dudex - 1, world->map->dudey)) {
+	if (r_can_fight(world, world->map->dudex - 1, world->map->dudey)) {
+		return 2;
+	} else if (r_can_enter(world,
+			world->map->dudex - 1, world->map->dudey)) {
 		world->map->dudex --;
 		return 1;
 	}
@@ -46,7 +72,10 @@ int r_move_left(struct World *world)
 
 int r_move_right(struct World *world)
 {    
-	if (r_can_enter(world, world->map->dudex + 1, world->map->dudey)) {
+	if (r_can_fight(world, world->map->dudex + 1, world->map->dudey)) {
+		return 2;
+	} else if (r_can_enter(world,
+			world->map->dudex + 1, world->map->dudey)) {
 		world->map->dudex ++;
 		return 1;
 	}
@@ -55,7 +84,10 @@ int r_move_right(struct World *world)
 
 int r_move_up(struct World *world)
 {    
-	if (r_can_enter(world, world->map->dudex, world->map->dudey - 1)) {
+	if (r_can_fight(world, world->map->dudex, world->map->dudey - 1)) {
+		return 2;
+	} else if (r_can_enter(world,
+			world->map->dudex, world->map->dudey - 1)) {
 		world->map->dudey --;
 		return 1;
 	}
@@ -64,7 +96,10 @@ int r_move_up(struct World *world)
 
 int r_move_down(struct World *world)
 {    
-	if (r_can_enter(world, world->map->dudex, world->map->dudey + 1)) {
+	if (r_can_fight(world, world->map->dudex, world->map->dudey + 1)) {
+		return 2;
+	} else if (r_can_enter(world,
+			world->map->dudex, world->map->dudey + 1)) {
 		world->map->dudey ++;
 		return 1;
 	}

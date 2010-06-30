@@ -83,11 +83,8 @@ void v_draw_more_bg(
 
 void v_draw_dude(struct VEngine *veng);
 void v_draw_monster(struct VEngine *veng, struct World *world, u8 idx);
-
-void v_move_left(struct VEngine *veng);
-void v_move_right(struct VEngine *veng);
-void v_move_up(struct VEngine *veng);
-void v_move_down(struct VEngine *veng);
+void v_move(struct VEngine *veng, int dx, int dy);
+int v_move_co(struct VEngine *veng);
 int v_at_edge(struct VEngine *veng, struct World *world);
 void v_scroll_at_edge(struct VEngine *veng, struct World *world);
 

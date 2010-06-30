@@ -57,50 +57,15 @@ int r_can_fight(struct World *world, u32 x, u32 y)
 }
 
 /* move the dude's position on map */
-
-int r_move_left(struct World *world)
-{    
-	if (r_can_fight(world, world->map->dudex - 1, world->map->dudey)) {
+int r_move(struct World *world, int dx, int dy)
+{
+	if (r_can_fight(world,
+			world->map->dudex + dx, world->map->dudey + dy)) {
 		return 2;
 	} else if (r_can_enter(world,
-			world->map->dudex - 1, world->map->dudey)) {
-		world->map->dudex --;
-		return 1;
-	}
-	return 0;
-}
-
-int r_move_right(struct World *world)
-{    
-	if (r_can_fight(world, world->map->dudex + 1, world->map->dudey)) {
-		return 2;
-	} else if (r_can_enter(world,
-			world->map->dudex + 1, world->map->dudey)) {
-		world->map->dudex ++;
-		return 1;
-	}
-	return 0;
-}
-
-int r_move_up(struct World *world)
-{    
-	if (r_can_fight(world, world->map->dudex, world->map->dudey - 1)) {
-		return 2;
-	} else if (r_can_enter(world,
-			world->map->dudex, world->map->dudey - 1)) {
-		world->map->dudey --;
-		return 1;
-	}
-	return 0;
-}
-
-int r_move_down(struct World *world)
-{    
-	if (r_can_fight(world, world->map->dudex, world->map->dudey + 1)) {
-		return 2;
-	} else if (r_can_enter(world,
-			world->map->dudex, world->map->dudey + 1)) {
-		world->map->dudey ++;
+			world->map->dudex + dx, world->map->dudey + dy)) {
+		world->map->dudex += dx;
+		world->map->dudey += dy;
 		return 1;
 	}
 	return 0;

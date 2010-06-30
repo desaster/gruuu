@@ -5,6 +5,14 @@
 #include "util.h"
 #include "map.h"
 
+typedef struct _anim {
+	int dx;
+	int dy;
+	int i;
+} AnimationData;
+
+static AnimationData dudeAnim;
+
 /* Get the screen entry index for a tile-coord pair
  * And yes, the div and mods will be converted by the compiler (tonc) */
 u32 se_index(u32 tx, u32 ty, u32 pitch)
@@ -320,6 +328,7 @@ void v_shake_dude(struct VEngine *veng, u8 x, u8 y)
 
 void v_draw_dude(struct VEngine *veng)
 {
+	if (dudeAnim.dx || dudeAnim.dy) return;
 	obj_set_pos(SPR_DUDE,
 		(16 * 7) + (veng->dudeposx * 16),
 		(16 * 4) + (veng->dudeposy * 16));
@@ -352,60 +361,43 @@ void v_draw_monster(struct VEngine *veng, struct World *world, u8 idx)
 
 /* Animate dude's movements */
 
-void v_move_left(struct VEngine *veng)
+void v_move_once(struct VEngine *veng)
 {
-	int i;
-
-	for (i = 0; i < 16; i += 4) {
-		obj_set_pos(SPR_DUDE,
-			(16 * 7) + (veng->dudeposx * 16) - i,
-			(16 * 4) + (veng->dudeposy * 16));
-		oam_copy(oam_mem, veng->obj_buffer, 1); 
-		vid_vsync();
-	}
-	veng->dudeposx --;
+	obj_set_pos(SPR_DUDE,
+		(16 * 7) + (veng->dudeposx * 16) + dudeAnim.i*dudeAnim.dx,
+		(16 * 4) + (veng->dudeposy * 16) + dudeAnim.i*dudeAnim.dy);
+	oam_copy(oam_mem, veng->obj_buffer, 1);
+	dudeAnim.i += 4;
 }
 
-void v_move_right(struct VEngine *veng)
+void v_move(struct VEngine *veng, int dx, int dy)
 {
-	int i;
-
-	for (i = 0; i < 16; i += 4) {
-		obj_set_pos(SPR_DUDE,
-			(16 * 7) + (veng->dudeposx * 16) + i,
-			(16 * 4) + (veng->dudeposy * 16));
-		oam_copy(oam_mem, veng->obj_buffer, 1); 
-		vid_vsync();
+	dudeAnim.dx = dx;
+	dudeAnim.dy = dy;
+	dudeAnim.i = 0;
+	/*
+	for (;dudeAnim.i < 16;) {
+		v_move_once(veng);
+		vid_vsync(); 
 	}
-	veng->dudeposx ++;
+	veng->dudeposx += dudeAnim.dx;
+	veng->dudeposy += dudeAnim.dy;
+	*/
 }
 
-void v_move_up(struct VEngine *veng)
+int v_move_co(struct VEngine *veng)
 {
-	int i;
-
-	for (i = 0; i < 16; i += 4) {
-		obj_set_pos(SPR_DUDE,
-			(16 * 7) + (veng->dudeposx * 16),
-			(16 * 4) + (veng->dudeposy * 16) - i);
-		oam_copy(oam_mem, veng->obj_buffer, 1); 
-		vid_vsync();
+	if (dudeAnim.dx || dudeAnim.dy) {
+		v_move_once(veng);
+		if (dudeAnim.i >= 16) {
+			veng->dudeposx += dudeAnim.dx;
+			veng->dudeposy += dudeAnim.dy;
+			dudeAnim.dx = dudeAnim.dy = 0;
+			return 0;
+		}
+		return 1;
 	}
-	veng->dudeposy --;
-}
-
-void v_move_down(struct VEngine *veng)
-{
-	int i;
-
-	for (i = 0; i < 16; i += 4) {
-		obj_set_pos(SPR_DUDE,
-			(16 * 7) + (veng->dudeposx * 16),
-			(16 * 4) + (veng->dudeposy * 16) + i);
-		oam_copy(oam_mem, veng->obj_buffer, 1); 
-		vid_vsync();
-	}
-	veng->dudeposy ++;
+	return 0;
 }
 
 /* Scroll the dude & monsters */

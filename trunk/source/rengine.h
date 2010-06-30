@@ -18,10 +18,7 @@ struct World {
 
 void init_monster(struct World *world, int i);
 
-int r_move_left(struct World *world);
-int r_move_right(struct World *world);
-int r_move_up(struct World *world);
-int r_move_down(struct World *world);
+int r_move(struct World *world, int dx, int dy);
 
 #endif
 

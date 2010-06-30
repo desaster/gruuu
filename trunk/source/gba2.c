@@ -8,6 +8,7 @@
 #include "genmap.h"
 #include "rengine.h"
 #include "vengine.h"
+#include "joy.h"
 
 #define HTILES 15
 #define VTILES 10
@@ -32,8 +33,10 @@ int main()
 	int i;
 	struct VEngine veng;
 	struct World world;
+	JoyState* joy;
 
 	v_init(&veng);
+	joy_init();
 
 	/* for a random seed, wait for user input */
 	i = 0;
@@ -63,6 +66,7 @@ int main()
 	while(1)
 	{
 		vid_vsync();
+		joy = joy_poll();
 		key_poll();
 
 		if (key_hit(KEY_A)) {
@@ -85,6 +89,7 @@ int main()
 				world.map->dudex, world.map->dudey);
 		}
 
+		/*
 		if (key_hit(KEY_LEFT)) {
 			switch (r_move_left(&world)) {
 				case 1:
@@ -122,6 +127,20 @@ int main()
 					break;
 			}
 		}
+		*/
+
+		if (joy->moving) {
+			switch (r_move(&world, joy->dx, joy->dy)) {
+				case 1:
+					v_move(&veng, joy->dx, joy->dy);
+					break;
+				case 2:
+					v_shake_dude(&veng, 0, 1);
+					break;
+			}
+			joy_handled();
+		}
+		v_move_co(&veng);
 
 		v_scroll_at_edge(&veng, &world);
 

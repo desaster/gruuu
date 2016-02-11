@@ -1,0 +1,6 @@
+<font color='#000' face='monospace' size='10px'>##########</font><br>
+<font color='#000' face='monospace' size='10px'>#</font><font color='#bbb' face='monospace' size='10px'>........</font><font color='#000' face='monospace' size='10px'>#</font><br>
+<font color='#000' face='monospace' size='10px'>#</font><font color='#bbb' face='monospace' size='10px'>....</font><font color='#000' face='monospace' size='10px'>@</font><font color='#bbb' face='monospace' size='10px'>...</font><font color='#000' face='monospace' size='10px'>#</font><br>
+<font color='#000' face='monospace' size='10px'>#</font><font color='#bbb' face='monospace' size='10px'>........</font><font color='#000' face='monospace' size='10px'>#</font><br>
+<font color='#000' face='monospace' size='10px'>#</font><font color='#bbb' face='monospace' size='10px'>..</font><font color='#3a3' face='monospace' size='10px'>g</font><font color='#bbb' face='monospace' size='10px'>.....</font><font color='#000' face='monospace' size='10px'>#</font><br>
+<font color='#000' face='monospace' size='10px'>###</font><font color='#b22' face='monospace' size='10px'>+</font><font color='#000' face='monospace' size='10px'>######</font><br>
